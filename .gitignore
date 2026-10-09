@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.lnk
+# Generated on the user's machine; excluded from the open-source release.
+codex.ico
+preview.png
+tray-preview.png
+TEST-RESULTS.md
+# Defensive exclusions; this tool never creates or reads these files.
+auth.json
+.env
+.env.*
+*.log

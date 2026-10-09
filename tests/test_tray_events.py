@@ -1,0 +1,58 @@
+from pathlib import Path
+import queue
+import sys
+import unittest
+from unittest.mock import MagicMock
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tray import TrayApp, WM_TRAY
+
+
+class TrayClickTests(unittest.TestCase):
+    def setUp(self):
+        self.app = TrayApp.__new__(TrayApp)
+        self.app.closed = False
+        self.app.events = queue.Queue()
+        self.app._notify_version4 = True
+        self.app._menu_pending = False
+        self.app._menu_active = False
+        self.app.user = MagicMock()
+
+    def send(self, event):
+        self.app._window_message(1, WM_TRAY, 0, (1 << 16) | event)
+
+    def test_right_click_messages_queue_only_one_menu(self):
+        self.send(0x205)  # WM_RBUTTONUP
+        self.send(0x7B)   # WM_CONTEXTMENU
+        self.send(0x7B)
+        self.assertEqual(self.app.events.get_nowait(), "popup")
+        self.assertTrue(self.app.events.empty())
+
+    def test_single_left_click_after_refresh_never_reopens_menu(self):
+        for event in (0x201, 0x202, 0x400):  # left down/up, NIN_SELECT
+            self.send(event)
+        self.assertTrue(self.app.events.empty())
+
+    def test_native_messages_during_open_menu_do_not_queue_another(self):
+        self.app._menu_active = True
+        self.send(0x205)
+        self.send(0x7B)
+        self.assertTrue(self.app.events.empty())
+
+    def test_older_shell_uses_only_right_button_up(self):
+        self.app._notify_version4 = False
+        self.send(0x7B)
+        self.assertTrue(self.app.events.empty())
+        self.send(0x205)
+        self.assertEqual(self.app.events.get_nowait(), "popup")
+
+    def test_new_right_click_after_menu_closes_is_allowed(self):
+        self.send(0x7B)
+        self.app.events.get_nowait()
+        self.app._menu_pending = False
+        self.send(0x7B)
+        self.assertEqual(self.app.events.get_nowait(), "popup")
+
+
+if __name__ == "__main__":
+    unittest.main()
