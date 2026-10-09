@@ -20,6 +20,7 @@ WINDOW_CLASS = "CodexWeeklyTrayWindow"
 WINDOW_TITLE = "CodexWeeklyTray"
 # Official native entry point. This version has no Usage-section deep link.
 CODEX_SETTINGS_URI = "codex://settings"
+AUTO_REFRESH_SECONDS = 5 * 60
 WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, w.HWND, w.UINT, w.WPARAM, w.LPARAM)
 
 
@@ -168,6 +169,8 @@ class TrayApp:
         self.user, self.gdi, self.shell, self.kernel = native_apis()
         self.closed = False
         self.busy = False
+        self._auto_refresh_enabled = auto_refresh
+        self._next_refresh_at = time.monotonic() if auto_refresh else None
         self.quota: WeeklyQuota | None = None
         self.reason = "尚未读取；右键选择刷新"
         self.client = None
@@ -198,20 +201,19 @@ class TrayApp:
             self.close()
             raise RuntimeError("Notification area unavailable")
         self._after_id = root.after(100, self._poll)
-        if auto_refresh:
-            root.after(150, self.refresh)
 
     def tooltip(self):
         if self.busy:
             return "Codex 周额度：读取中…"
         if self.quota is None:
-            return "Codex 周额度：暂不可用\n" + self.reason + "\n右键可刷新或退出"
+            retry = "每5分钟自动重试；右键可刷新或退出" if self._auto_refresh_enabled else "右键可刷新或退出"
+            return "Codex 周额度：暂不可用\n" + self.reason + "\n" + retry
         age = max(0, int(time.time() - self.quota.fetched_at))
         updated = "刚刚更新" if age < 60 else f"{age // 60} 分钟前更新"
         return (f"Codex 本周剩余 {percent_text(self.quota.remaining_percent)}\n"
                 f"{countdown_text(self.quota.resets_at)}\n"
                 f"重置：{reset_text(self.quota.resets_at)} UTC+02:00\n"
-                f"{updated} · 右键刷新")
+                f"{updated} · " + ("5分钟自动刷新 / 右键刷新" if self._auto_refresh_enabled else "右键刷新"))
 
     def _sync_icon(self):
         if self.closed:
@@ -319,6 +321,9 @@ class TrayApp:
     def refresh(self):
         if self.closed or self.busy:
             return
+        # A manual attempt also restarts the interval, avoiding back-to-back reads.
+        if self._auto_refresh_enabled:
+            self._next_refresh_at = time.monotonic() + AUTO_REFRESH_SECONDS
         self.busy, self.quota = True, None
         self.reason = ""
         self._sync_icon()
@@ -345,6 +350,13 @@ class TrayApp:
             self.reason = result if isinstance(result, str) else "已到重置时间，请刷新"
         self._sync_icon()
 
+    def _auto_refresh_if_due(self):
+        if (self.closed or self.busy or not self._auto_refresh_enabled
+                or self._next_refresh_at is None):
+            return
+        if time.monotonic() >= self._next_refresh_at:
+            self.refresh()
+
     def _poll(self):
         if self.closed:
             return
@@ -366,6 +378,9 @@ class TrayApp:
             pass
         if self.quota is not None and self.quota.resets_at <= time.time():
             self._apply_result("已到重置时间，请刷新")
+            if self._auto_refresh_enabled:
+                self._next_refresh_at = time.monotonic()
+        self._auto_refresh_if_due()
         self._sync_icon()
         self._after_id = self.root.after(250, self._poll)
 

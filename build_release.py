@@ -5,7 +5,7 @@ from pathlib import Path
 import zipfile
 
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 PROJECT = "codex-weekly-widget"
 RELEASE_FILES = (
     ".gitignore", "LICENSE", "README.md",
@@ -13,7 +13,7 @@ RELEASE_FILES = (
     "Start-Widget.ps1", "Start-Widget.vbs",
     "Start-Codex-With-Quota.ps1", "Start-Codex-With-Quota.vbs", "Create-Codex-Shortcut.ps1",
     "tests/test_rate_limits.py", "tests/test_countdown.py", "tests/test_tray_events.py",
-    "tests/test_details_link.py", "tests/check_ui.py", "tests/check_tray.py", "tests/check_launcher.py",
+    "tests/test_details_link.py", "tests/test_auto_refresh.py", "tests/check_ui.py", "tests/check_tray.py", "tests/check_launcher.py",
 )
 
 

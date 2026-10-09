@@ -4,11 +4,13 @@ import json
 from pathlib import Path
 import sys
 import threading
+import time
 import tkinter as tk
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tray import CODEX_SETTINGS_URI, TrayApp, WM_TRAY, countdown_text
+from tray import AUTO_REFRESH_SECONDS, CODEX_SETTINGS_URI, TrayApp, WM_TRAY, countdown_text
+from rate_limits import AppServerClient
 from widget import enable_dpi_awareness, percent_text
 from check_ui import pump
 
@@ -42,6 +44,18 @@ def main():
         report["live_quota_icon_and_hover_countdown"] = True
         report["remaining_percent"] = app.quota.remaining_percent
         report["hover_text"] = app.tooltip()
+        # Advance only the scheduler deadline; UI quota still comes from the real RPC.
+        previous_fetch = app.quota.fetched_at
+        app._auto_refresh_enabled = True
+        app._next_refresh_at = time.monotonic() - 1
+        with patch("tray.AppServerClient", wraps=AppServerClient) as clients:
+            pump(root, lambda: app.quota is not None and app.quota.fetched_at > previous_fetch)
+            clients.assert_called_once()
+        assert not app.busy and "5分钟自动刷新" in app.tooltip()
+        assert app._next_refresh_at > time.monotonic() + AUTO_REFRESH_SECONDS - 30
+        report["live_automatic_refresh_without_menu_action"] = True
+        app._auto_refresh_enabled = False
+        app._next_refresh_at = None
         if "--capture" in sys.argv:
             save_icon(app)
         menu = app._create_menu()

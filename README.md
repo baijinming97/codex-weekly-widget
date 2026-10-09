@@ -25,6 +25,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Create-Codex-Shortcut.
 “跟随启动”通过这个统一入口实现；Windows 开机和原来的 Codex 启动入口不会单独启动工具。没有添加常驻启动监视器或开机任务。桌面快捷方式可直接删除；`Create-Codex-Shortcut.ps1` 可重新创建。
 
 - 鼠标悬停：显示准确剩余百分比、距离额度**重置**还有几天几小时、具体重置时间及数据更新时间。
+- 默认每 **5 分钟自动刷新**，也可随时右键手动刷新。自动刷新不弹出菜单或窗口。
 - 右键：**刷新额度 / 查看明细 / 退出**。“查看明细”和双击图标通过 `codex://settings` 打开 **Codex 应用内设置**，再点击 **用量（Usage）** 查看详情。本机版本没有直达用量页的深链接；不打开浏览器或本地明细窗口。入口说明见 [官方深链接文档](https://learn.chatgpt.com/docs/app/commands#deep-links)。
 - 选择刷新后菜单关闭；左键单击不会再唤起菜单。只有新的右键操作才打开菜单。
 - 彻底关闭请在托盘右键选择 **退出**。
@@ -38,7 +39,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Create-Codex-Shortcut.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Start-Widget.ps1
 ```
 
-启动时读取一次；此后只在点击刷新时请求额度，不轮询网络。悬停倒计时在本机随时间更新，额度百分比是最近一次成功读取的结果，并显示“几分钟前更新”。在上次数据的重置时间到达后清除百分比并提示刷新。
+启动时读取一次，此后每 **5 分钟**在后台自动读取额度；右键仍可立即刷新。手动刷新会重新计算下个自动刷新时间。读取未完成时不重复请求；失败后清除数字并显示“暂不可用”，等下个周期重试。电脑休眠后恢复时，若已到周期会读取一次，不补发休眠期间的请求。悬停倒计时在本机随时间更新，额度百分比来自最近一次成功读取，并显示“几分钟前更新”。到重置时间时清除旧数字并自动读取。退出工具后停止刷新。
 
 ## 数据来源与周窗口
 
@@ -97,7 +98,7 @@ python .\tests\check_launcher.py
 python .\build_release.py
 ```
 
-输出 `dist\codex-weekly-widget-v1.0.0.zip`。打包使用明确的源码清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
+输出 `dist\codex-weekly-widget-v1.1.0.zip`。打包使用明确的源码清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
 
 将 ZIP 解压到独立目录后，可把其中源码上传到自己的 GitHub 仓库，并把 ZIP 放到 Release 供其他电脑下载。MIT 许可证允许使用、修改和分发这些源码；OpenAI/Codex 名称及原应用图标不属于本项目的许可内容。
 
