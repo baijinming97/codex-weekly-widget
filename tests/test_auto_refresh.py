@@ -17,7 +17,7 @@ class AutoRefreshTests(unittest.TestCase):
         self.app.quota = None
         self.app.client = None
         self.app._auto_refresh_enabled = True
-        self.app._next_refresh_at = 300.0
+        self.app._next_refresh_at = 60.0
         self.app.results = queue.Queue()
         self.app.events = queue.Queue()
         self.app.root = MagicMock()
@@ -40,7 +40,7 @@ class AutoRefreshTests(unittest.TestCase):
         self.assertTrue(self.app.busy)
 
     def test_interval_ignores_wall_clock_changes(self):
-        self.poll_at(299.9, wall=9_000_000_000.0)
+        self.poll_at(59.9, wall=9_000_000_000.0)
         self.clients.assert_not_called()
         self.app.root.after.assert_called_once()
 
@@ -55,26 +55,26 @@ class AutoRefreshTests(unittest.TestCase):
         self.app.busy = True
         self.poll_at(1000.0)
         self.clients.assert_not_called()
-        self.assertEqual(self.app._next_refresh_at, 300.0)
+        self.assertEqual(self.app._next_refresh_at, 60.0)
 
-    def test_manual_refresh_restarts_five_minute_interval(self):
+    def test_manual_refresh_restarts_one_minute_interval(self):
         with patch("tray.time.monotonic", return_value=200.0):
             self.app.refresh()
-        self.assertEqual(self.app._next_refresh_at, 200.0 + AUTO_REFRESH_SECONDS)
+        self.assertEqual(self.app._next_refresh_at, 260.0)
         self.app._apply_result("暂不可用")
-        self.poll_at(499.9)
+        self.poll_at(259.9)
         self.clients.assert_called_once()
 
     def test_failure_waits_until_next_cycle_before_retrying(self):
         self.app.busy = True
         self.app._apply_result("暂不可用")
-        self.poll_at(299.9)
+        self.poll_at(59.9)
         self.clients.assert_not_called()
-        self.poll_at(300.0)
-        self.poll_at(300.0)
+        self.poll_at(60.0)
+        self.poll_at(60.0)
         self.clients.assert_called_once()
         self.assertIsNone(self.app.quota)
-        self.assertEqual(self.app._next_refresh_at, 600.0)
+        self.assertEqual(self.app._next_refresh_at, 120.0)
 
     def test_disabled_auto_keeps_manual_refresh_available(self):
         self.app._auto_refresh_enabled = False

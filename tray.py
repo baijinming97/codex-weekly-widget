@@ -20,7 +20,7 @@ WINDOW_CLASS = "CodexWeeklyTrayWindow"
 WINDOW_TITLE = "CodexWeeklyTray"
 # Official native entry point. This version has no Usage-section deep link.
 CODEX_SETTINGS_URI = "codex://settings"
-AUTO_REFRESH_SECONDS = 5 * 60
+AUTO_REFRESH_SECONDS = 60
 WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, w.HWND, w.UINT, w.WPARAM, w.LPARAM)
 
 
@@ -206,14 +206,14 @@ class TrayApp:
         if self.busy:
             return "Codex 周额度：读取中…"
         if self.quota is None:
-            retry = "每5分钟自动重试；右键可刷新或退出" if self._auto_refresh_enabled else "右键可刷新或退出"
+            retry = f"每{AUTO_REFRESH_SECONDS // 60}分钟自动重试；右键可刷新或退出" if self._auto_refresh_enabled else "右键可刷新或退出"
             return "Codex 周额度：暂不可用\n" + self.reason + "\n" + retry
         age = max(0, int(time.time() - self.quota.fetched_at))
         updated = "刚刚更新" if age < 60 else f"{age // 60} 分钟前更新"
         return (f"Codex 本周剩余 {percent_text(self.quota.remaining_percent)}\n"
                 f"{countdown_text(self.quota.resets_at)}\n"
                 f"重置：{reset_text(self.quota.resets_at)} UTC+02:00\n"
-                f"{updated} · " + ("5分钟自动刷新 / 右键刷新" if self._auto_refresh_enabled else "右键刷新"))
+                f"{updated} · " + (f"{AUTO_REFRESH_SECONDS // 60}分钟自动刷新 / 右键刷新" if self._auto_refresh_enabled else "右键刷新"))
 
     def _sync_icon(self):
         if self.closed:

@@ -5,7 +5,7 @@ from pathlib import Path
 import zipfile
 
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 PROJECT = "codex-weekly-widget"
 RELEASE_FILES = (
     ".gitignore", "LICENSE", "README.md",

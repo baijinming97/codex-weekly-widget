@@ -51,7 +51,7 @@ def main():
         with patch("tray.AppServerClient", wraps=AppServerClient) as clients:
             pump(root, lambda: app.quota is not None and app.quota.fetched_at > previous_fetch)
             clients.assert_called_once()
-        assert not app.busy and "5分钟自动刷新" in app.tooltip()
+        assert not app.busy and "1分钟自动刷新" in app.tooltip()
         assert app._next_refresh_at > time.monotonic() + AUTO_REFRESH_SECONDS - 30
         report["live_automatic_refresh_without_menu_action"] = True
         app._auto_refresh_enabled = False
