@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
 from ctypes import wintypes as w
 import math
 import os
+from pathlib import Path
 import queue
 import threading
 import time
@@ -16,7 +18,8 @@ from widget import SingleInstance, enable_dpi_awareness, percent_text, reset_tex
 
 
 WM_TRAY = 0x8001
-WINDOW_CLASS = "CodexWeeklyTrayWindow"
+# Scope lifecycle operations to this copy, including installed/source copies.
+WINDOW_CLASS = "CodexWeeklyTrayWindow_" + hashlib.sha256(os.path.normcase(str(Path(__file__).resolve())).encode("utf-8")).hexdigest()[:20]
 WINDOW_TITLE = "CodexWeeklyTray"
 # Official native entry point. This version has no Usage-section deep link.
 CODEX_SETTINGS_URI = "codex://settings"

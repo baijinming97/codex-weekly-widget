@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 import subprocess
 import time
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tray import WINDOW_CLASS
 
 TITLE = "CodexWeeklyTray"
 user = ctypes.WinDLL("user32", use_last_error=True)
@@ -16,7 +20,7 @@ user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes
 
 
 def find_widget():
-    return user.FindWindowW("CodexWeeklyTrayWindow", TITLE)
+    return user.FindWindowW(WINDOW_CLASS, TITLE)
 
 
 def wait_for(predicate, timeout=15):

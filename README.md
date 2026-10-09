@@ -1,28 +1,40 @@
 # Codex Weekly Widget · Codex 周额度托盘图标
 
-Windows 系统托盘中的 Codex 周额度数字图标。仅依赖 Python 标准库，使用本机官方 Codex App Server。这是独立的社区工具，与 OpenAI 无官方关联。源码采用 [MIT 许可证](LICENSE)。
+Windows 系统托盘中的 Codex 周额度数字图标，使用本机官方 Codex App Server。安装版已包含运行组件，无需另装 Python。这是独立的社区工具，与 OpenAI 无官方关联。源码采用 [MIT 许可证](LICENSE)。
 
 ## 在另一台电脑使用
 
-需要已有的 **Windows、Python 3.12 或更新版本（包含 tkinter），以及已登录且支持 App Server 额度接口的 Codex**。项目在 Python 3.12 上验证；工具不会安装软件或自动登录。
+推荐使用 **Windows 10/11 x64 安装版**。需要已安装并登录、支持 App Server 额度接口的官方 Codex；工具不会替你安装 Codex 或登录。
 
-1. 下载源码 ZIP 并**完整解压**到固定文件夹，例如 `C:\Tools\codex-weekly-widget`。也可以复制整个源码文件夹；不用复制账号或认证文件。
-2. 双击 **Start-Widget.vbs**。
-3. 如需与 Codex 一起启动，在源码文件夹中打开 PowerShell，执行下面的命令。之后从新建的 **Codex（含额度）** 桌面快捷方式启动：
+1. 从 [最新 Release](https://github.com/baijinming97/codex-weekly-widget/releases/latest) 下载 **CodexWeeklyWidget-Setup-v1.2.0-x64.exe**。
+2. 双击，点击 **安装并启动**。无需解压、运行命令或安装 Python，也无需管理员权限。
+3. 之后双击桌面 **Codex（含额度）**；也可以在开始菜单 **Codex 周额度 → 仅启动额度图标** 中单独启动图标。
+
+安装界面中的 **登录 Windows 后自动启动额度图标** 默认勾选，可以取消。该启动项只启动额度图标，配合 Codex 已有的自启动设置；Codex 是否自启由它自己的设置控制。不会再次启动 Codex，也不添加常驻监视器。需要改变选项时，重新运行安装器并选择即可。
+
+安装位置为当前用户的 `%LOCALAPPDATA%\CodexWeeklyWidget`，运行组件放在其 `runtime` 子目录，不注册系统 Python、不修改 PATH。升级时双击新版安装器；会先关闭这份安装版的图标，再更新文件。卸载请在开始菜单 **Codex 周额度 → 卸载** 中操作，会移除本工具文件、快捷方式与启动项，保留你额外放入的文件。
+
+安装器目前未签名，Windows 可能显示未知发布者。请确认文件来自本仓库的 Release，可核对 Release 中的 SHA-256。安装流程已在本机隔离目录验证，尚未在第二台电脑实测。
+
+每台电脑读取自己的 Codex 登录账户；不用复制账号或认证文件。统一入口根据本机安装清单寻找 Codex 应用，不依赖开发者电脑的用户名、盘符或安装版本。
+
+### 从源码运行
+
+源码版需要已有 **Python 3.12 或更新版本（包含 tkinter）**，在 Python 3.12 上验证。下载源码 ZIP，完整解压到固定文件夹，然后双击 **Start-Widget.vbs**。源码版不会创建开机启动项。可选创建与 Codex 一起启动的桌面入口：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Create-Codex-Shortcut.ps1
 ```
 
-统一入口根据本机安装清单寻找 Codex 应用，不依赖开发者电脑的用户名、盘符或安装版本。移动工具文件夹后，请重新创建快捷方式。每台电脑读取自己的 Codex 登录账户；无需从 GitHub 获取账号文件或额度数据。
+移动源码文件夹后，请重新创建快捷方式。
 
 ## 操作
 
-双击本目录的 **Start-Widget.vbs** 启动（无控制台窗口）。默认只在 Windows 右下角系统托盘显示一个数字图标，例如 **98** 代表周额度剩余 **98%**。重复启动不会创建多个图标。
+启动后仅在 Windows 右下角系统托盘显示一个数字图标，例如 **98** 代表周额度剩余 **98%**，无控制台窗口。重复启动同一份工具不会创建多个图标。
 
 创建 **Codex（含额度）** 快捷方式后，从这个入口启动 Codex 时，会同时启动额度托盘图标。也可以双击本目录的 **Start-Codex-With-Quota.vbs**。启动器通过本机已注册的 Codex 应用 ID 打开官方应用，兼容安装路径随更新变化。
 
-“跟随启动”通过这个统一入口实现；Windows 开机和原来的 Codex 启动入口不会单独启动工具。没有添加常驻启动监视器或开机任务。桌面快捷方式可直接删除；`Create-Codex-Shortcut.ps1` 可重新创建。
+“跟随 Codex 启动”通过统一入口实现；登录 Windows 时的启动由安装界面的独立选项控制。
 
 - 鼠标悬停：显示准确剩余百分比、距离额度**重置**还有几天几小时、具体重置时间及数据更新时间。
 - 默认每 **1 分钟自动刷新**，也可随时右键手动刷新。自动刷新不弹出菜单或窗口。
@@ -61,7 +73,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Start-Widget.ps1
 
 程序只调用官方 App Server。工具源码不打开认证文件、不读取/输出令牌、不调用登录/注销接口；认证由 Codex 自己使用其现有登录状态完成。stderr 丢弃，RPC 错误只转换为固定提示，不记录原始消息、账户或环境内容。
 
-不会修改 Codex 安装文件、安装依赖、修改注册表、创建计划任务或设置开机启动。退出后删除本目录即可移除工具。
+不会修改 Codex 安装文件、读取认证文件、修改注册表或创建计划任务。安装版仅在你保留自启勾选时创建当前用户的启动文件夹快捷方式；卸载时移除。源码版退出后删除目录即可移除工具。
 
 ## 检查与测试
 
@@ -84,6 +96,10 @@ python .\tests\check_tray.py
 
 # 检查双击启动器、重复启动与关闭（测试时会关闭本工具）。
 python .\tests\check_launcher.py
+
+# 构建安装器，并验证隔离安装、真实额度、升级、自启快捷方式和卸载。
+python .\build_installer.py
+python .\tests\check_installer.py
 ```
 
 运行界面始终使用真实接口数据。自动测试中的数据样例仅用于验证字段选择和错误处理，不连接运行界面。界面测试中的百分比来自真实接口；错误/过期测试会清空读数。
@@ -96,10 +112,13 @@ python .\tests\check_launcher.py
 
 ```powershell
 python .\build_release.py
+python .\build_installer.py
 ```
 
-输出 `dist\codex-weekly-widget-v1.1.1.zip`。打包使用明确的源码清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
+分别输出 `dist\codex-weekly-widget-v1.2.0.zip` 和 `dist\CodexWeeklyWidget-Setup-v1.2.0-x64.exe`。源码 ZIP 使用明确的文件清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。源码启动器的桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
+
+安装器构建需要已有的 Windows x64 CPython 3.12（含 Tk）和 Windows .NET Framework C# 编译器，不自动安装任何依赖。`build_installer.py` 只复制明确列出的 CPython/Tcl/Tk 运行文件和标准库，不复制第三方 site-packages 或用户配置；运行时用 `python312._pth` 隔离系统 Python 与用户模块。附带组件的原始许可证见 [第三方组件说明](THIRD-PARTY-NOTICES.md)。安装器源码为 `windows/Desktop.cs`。
 
 将 ZIP 解压到独立目录后，可把其中源码上传到自己的 GitHub 仓库，并把 ZIP 放到 Release 供其他电脑下载。MIT 许可证允许使用、修改和分发这些源码；OpenAI/Codex 名称及原应用图标不属于本项目的许可内容。
 
-自动测试不读取真实账户，不需要 GitHub 或 Codex 登录。本机 UI/托盘集成检查需要 Windows 图形桌面与已有 Codex 登录；启动器检查只关闭和重启本工具，不关闭 Codex。
+单元测试不读取真实账户，不需要 GitHub 或 Codex 登录。本机 UI/托盘及安装器集成检查需要 Windows 图形桌面与已有 Codex 登录。安装器测试使用临时目录和隔离的桌面/开始菜单/启动目录，不修改本机实际启动项；它验证隐藏启动、单实例、升级、取消自启、路径越界拒绝及卸载保留额外文件，不关闭 Codex。

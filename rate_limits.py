@@ -175,7 +175,7 @@ class AppServerClient:
                     return message["result"]
 
             send({"id": 1, "method": "initialize", "params": {
-                "clientInfo": {"name": "codex_weekly_widget", "title": "Codex Weekly Widget", "version": "1.1.1"}
+                "clientInfo": {"name": "codex_weekly_widget", "title": "Codex Weekly Widget", "version": "1.2.0"}
             }})
             wait_for(1)
             send({"method": "initialized", "params": {}})
