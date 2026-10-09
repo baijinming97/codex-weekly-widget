@@ -6,7 +6,7 @@ Windows 系统托盘中的 Codex 周额度数字图标，使用本机官方 Code
 
 推荐使用 **Windows 10/11 x64 安装版**。需要已安装并登录、支持 App Server 额度接口的官方 Codex；工具不会替你安装 Codex 或登录。
 
-1. 从 [最新 Release](https://github.com/baijinming97/codex-weekly-widget/releases/latest) 下载 **CodexWeeklyWidget-Setup-v1.2.0-x64.exe**。
+1. 从 [最新 Release](https://github.com/baijinming97/codex-weekly-widget/releases/latest) 下载 **CodexWeeklyWidget-Setup-v1.2.1-x64.exe**。
 2. 双击，点击 **安装并启动**。无需解压、运行命令或安装 Python，也无需管理员权限。
 3. 之后双击桌面 **Codex（含额度）**；也可以在开始菜单 **Codex 周额度 → 仅启动额度图标** 中单独启动图标。
 
@@ -37,9 +37,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Create-Codex-Shortcut.
 “跟随 Codex 启动”通过统一入口实现；登录 Windows 时的启动由安装界面的独立选项控制。
 
 - 鼠标悬停：显示准确剩余百分比、距离额度**重置**还有几天几小时、具体重置时间及数据更新时间。
-- 默认每 **1 分钟自动刷新**，也可随时右键手动刷新。自动刷新不弹出菜单或窗口。
+- **左键单击图标立即刷新**；读取中再点击不会发起重复请求，也不会打开菜单。默认每 **1 分钟自动刷新**，右键菜单仍可手动刷新。
 - 右键：**刷新额度 / 查看明细 / 退出**。“查看明细”和双击图标通过 `codex://settings` 打开 **Codex 应用内设置**，再点击 **用量（Usage）** 查看详情。本机版本没有直达用量页的深链接；不打开浏览器或本地明细窗口。入口说明见 [官方深链接文档](https://learn.chatgpt.com/docs/app/commands#deep-links)。
-- 选择刷新后菜单关闭；左键单击不会再唤起菜单。只有新的右键操作才打开菜单。
+- 右键选择刷新后菜单关闭；左键单击直接刷新。只有新的右键操作才打开菜单，菜单打开时的左键关闭操作不会额外刷新。
 - 彻底关闭请在托盘右键选择 **退出**。
 - 如果 Windows 把新图标收进右下角 **^** 隐藏区域，可将它拖到外面的托盘区域。程序不修改任务栏设置。
 
@@ -51,7 +51,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Create-Codex-Shortcut.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Start-Widget.ps1
 ```
 
-启动时读取一次，此后每 **1 分钟**在后台自动读取额度；右键仍可立即刷新。手动刷新会重新计算下个自动刷新时间。读取未完成时不重复请求；失败后清除数字并显示“暂不可用”，等下个周期重试。电脑休眠后恢复时，若已到周期会读取一次，不补发休眠期间的请求。悬停倒计时在本机随时间更新，额度百分比来自最近一次成功读取，并显示“几分钟前更新”。到重置时间时清除旧数字并自动读取。退出工具后停止刷新。
+启动时读取一次，此后每 **1 分钟**在后台自动读取额度；左键单击或右键选择刷新均可立即读取。手动刷新会重新计算下个自动刷新时间。读取未完成时不重复请求；失败后清除数字并显示“暂不可用”，等下个周期重试。电脑休眠后恢复时，若已到周期会读取一次，不补发休眠期间的请求。悬停倒计时在本机随时间更新，额度百分比来自最近一次成功读取，并显示“几分钟前更新”。到重置时间时清除旧数字并自动读取。退出工具后停止刷新。
 
 ## 数据来源与周窗口
 
@@ -115,7 +115,7 @@ python .\build_release.py
 python .\build_installer.py
 ```
 
-分别输出 `dist\codex-weekly-widget-v1.2.0.zip` 和 `dist\CodexWeeklyWidget-Setup-v1.2.0-x64.exe`。源码 ZIP 使用明确的文件清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。源码启动器的桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
+分别输出 `dist\codex-weekly-widget-v1.2.1.zip` 和 `dist\CodexWeeklyWidget-Setup-v1.2.1-x64.exe`。源码 ZIP 使用明确的文件清单，不包含本机验证记录、截图、提取的 Codex 图标、缓存、认证文件或其他项目。源码启动器的桌面快捷方式图标在使用者电脑上从已有 Codex 只读提取，不随源码分发。
 
 安装器构建需要已有的 Windows x64 CPython 3.12（含 Tk）和 Windows .NET Framework C# 编译器，不自动安装任何依赖。`build_installer.py` 只复制明确列出的 CPython/Tcl/Tk 运行文件和标准库，不复制第三方 site-packages 或用户配置；运行时用 `python312._pth` 隔离系统 Python 与用户模块。附带组件的原始许可证见 [第三方组件说明](THIRD-PARTY-NOTICES.md)。安装器源码为 `windows/Desktop.cs`。
 

@@ -102,11 +102,15 @@ def main():
         root.update()
         assert app.events.empty() and not app._menu_pending and not app._menu_active
         report["actual_native_popup_open_and_dismiss"] = True
-        for event in (0x201, 0x202, 0x400):
-            app.user.PostMessageW(app.hwnd, WM_TRAY, 0, (1 << 16) | event)
-        root.update()
-        assert app.events.empty() and not app._menu_pending
+        previous_fetch = app.quota.fetched_at
+        with patch("tray.AppServerClient", wraps=AppServerClient) as clients:
+            for event in (0x201, 0x202, 0x400, 0x400):
+                app.user.PostMessageW(app.hwnd, WM_TRAY, 0, (1 << 16) | event)
+            pump(root, lambda: app.quota is not None and app.quota.fetched_at > previous_fetch)
+            clients.assert_called_once()
+        assert app.events.empty() and not app._menu_pending and not app._refresh_pending
         report["single_left_click_after_refresh_does_not_reopen_menu"] = True
+        report["single_left_click_reads_real_quota_once"] = True
         with patch("tray.os.startfile") as open_page:
             app._handle_command(2)
             open_page.assert_called_once_with(CODEX_SETTINGS_URI)

@@ -175,7 +175,7 @@ class TrayApp:
         self._auto_refresh_enabled = auto_refresh
         self._next_refresh_at = time.monotonic() if auto_refresh else None
         self.quota: WeeklyQuota | None = None
-        self.reason = "尚未读取；右键选择刷新"
+        self.reason = "尚未读取；左键单击刷新"
         self.client = None
         self.worker = None
         self.results = queue.Queue()
@@ -189,6 +189,7 @@ class TrayApp:
         self._notify_version4 = False
         self._menu_pending = False
         self._menu_active = False
+        self._refresh_pending = False
         self._wndproc = WNDPROC(self._window_message)
         self.module = self.kernel.GetModuleHandleW(None)
         self.window_class = WindowClass(0, self._wndproc, 0, 0, self.module, None, None, None, None, WINDOW_CLASS)
@@ -209,14 +210,14 @@ class TrayApp:
         if self.busy:
             return "Codex 周额度：读取中…"
         if self.quota is None:
-            retry = f"每{AUTO_REFRESH_SECONDS // 60}分钟自动重试；右键可刷新或退出" if self._auto_refresh_enabled else "右键可刷新或退出"
+            retry = f"每{AUTO_REFRESH_SECONDS // 60}分钟自动重试；左键刷新 / 右键菜单" if self._auto_refresh_enabled else "左键刷新 / 右键菜单"
             return "Codex 周额度：暂不可用\n" + self.reason + "\n" + retry
         age = max(0, int(time.time() - self.quota.fetched_at))
         updated = "刚刚更新" if age < 60 else f"{age // 60} 分钟前更新"
         return (f"Codex 本周剩余 {percent_text(self.quota.remaining_percent)}\n"
                 f"{countdown_text(self.quota.resets_at)}\n"
                 f"重置：{reset_text(self.quota.resets_at)} UTC+02:00\n"
-                f"{updated} · " + (f"{AUTO_REFRESH_SECONDS // 60}分钟自动刷新 / 右键刷新" if self._auto_refresh_enabled else "右键刷新"))
+                f"{updated} · " + (f"{AUTO_REFRESH_SECONDS // 60}分钟自动刷新 / 左键刷新" if self._auto_refresh_enabled else "左键刷新"))
 
     def _sync_icon(self):
         if self.closed:
@@ -260,7 +261,14 @@ class TrayApp:
                     if not self.closed and not self._menu_pending and not self._menu_active:
                         self._menu_pending = True
                         self.events.put("popup")
-                elif event in (0x203, 0x401):
+                elif event in (0x202, 0x400, 0x401):  # WM_LBUTTONUP, NIN_SELECT/KEYSELECT
+                    # Shell callbacks for one activation can arrive together. Queue
+                    # one refresh; the reader's busy guard also rejects further clicks.
+                    if (not self.closed and not self.busy and not self._refresh_pending
+                            and not self._menu_pending and not self._menu_active):
+                        self._refresh_pending = True
+                        self.events.put("refresh")
+                elif event == 0x203:  # WM_LBUTTONDBLCLK
                     self.events.put("details")
                 return 0
             if message == 0x10:
@@ -371,6 +379,9 @@ class TrayApp:
                 self.close()
                 return
             if event == "popup": self._popup()
+            elif event == "refresh":
+                self._refresh_pending = False
+                self.refresh()
             elif event == "details": self.show_details()
             elif event == "sync": self._sync_icon()
             if self.closed:

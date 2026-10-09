@@ -20,6 +20,7 @@ class AutoRefreshTests(unittest.TestCase):
         self.app._next_refresh_at = 60.0
         self.app.results = queue.Queue()
         self.app.events = queue.Queue()
+        self.app._refresh_pending = False
         self.app.root = MagicMock()
         self.app._sync_icon = MagicMock()
         self.client_patch = patch("tray.AppServerClient")
@@ -75,6 +76,17 @@ class AutoRefreshTests(unittest.TestCase):
         self.clients.assert_called_once()
         self.assertIsNone(self.app.quota)
         self.assertEqual(self.app._next_refresh_at, 120.0)
+
+    def test_click_event_refreshes_once_and_restarts_interval(self):
+        self.app._popup = MagicMock()
+        self.app._refresh_pending = True
+        self.app.events.put("refresh")
+        self.poll_at(200.0)
+        self.clients.assert_called_once()
+        self.app._popup.assert_not_called()
+        self.assertFalse(self.app._refresh_pending)
+        self.assertTrue(self.app.busy)
+        self.assertEqual(self.app._next_refresh_at, 260.0)
 
     def test_disabled_auto_keeps_manual_refresh_available(self):
         self.app._auto_refresh_enabled = False

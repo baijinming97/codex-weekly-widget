@@ -12,8 +12,8 @@ using System.Threading;
 using System.Windows.Forms;
 
 [assembly: AssemblyTitle("Codex Weekly Widget")]
-[assembly: AssemblyVersion("1.2.0.0")]
-[assembly: AssemblyFileVersion("1.2.0.0")]
+[assembly: AssemblyVersion("1.2.1.0")]
+[assembly: AssemblyFileVersion("1.2.1.0")]
 
 static class Desktop
 {
